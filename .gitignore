@@ -1,0 +1,24 @@
+# Archivos de respaldo
+*.zip
+backup_clinico.sql
+
+# Base de datos (se exporta manualmente cuando se necesite)
+condominio.sql
+
+# Comprobantes subidos (imágenes de usuarios)
+uploads/comprobantes/*
+
+# Archivos de entorno/configuración local
+.env
+.env.*
+*.local
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db
+
+# Editores/IDE
+.vscode/
+.idea/
+*.swp
+*.swo

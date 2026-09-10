@@ -1,0 +1,292 @@
+/* =========================================================
+   REPORTE_DEUDORES.CSS - Documento para cartelera
+   ========================================================= */
+
+body {
+    background: var(--humo);
+    font-family: 'Segoe UI', 'Inter', Tahoma, sans-serif;
+    color: var(--gris-700);
+    padding: 24px;
+}
+
+.toolbar {
+    max-width: 820px;
+    margin: 0 auto 16px;
+    display: flex;
+    gap: 10px;
+}
+
+.reporte-doc {
+    max-width: 820px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 14px;
+    padding: 36px 40px;
+    box-shadow: var(--sombra-lg);
+    border: 1px solid rgba(22, 50, 77, 0.12);
+}
+
+.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid var(--navy-800);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand i { font-size: 2.4rem; color: var(--accent); }
+.brand h1 { font-size: 1.35rem; color: var(--navy-800); margin: 0; }
+.brand p { color: var(--gris-500); font-size: 0.82rem; margin: 0; }
+
+.doc-num { text-align: right; }
+.doc-num strong {
+    display: block;
+    color: var(--rojo);
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+.doc-num span {
+    display: block;
+    background: var(--navy-800);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    margin-top: 6px;
+    font-size: 0.9rem;
+}
+
+.resumen-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.resumen-item {
+    flex: 1;
+    background: var(--humo);
+    border: 1px solid rgba(22, 50, 77, 0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+}
+.resumen-label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--gris-500);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.resumen-value {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--navy-800);
+}
+.resumen-value--danger { color: var(--rojo); }
+
+.doc-table--deudores {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 22px;
+}
+
+.doc-table--deudores th {
+    background: var(--navy-800);
+    color: #fff;
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.doc-table--deudores td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(22, 50, 77, 0.12);
+    font-size: 1.05rem;
+}
+
+.doc-table--deudores tbody tr:hover {
+    background: rgba(22, 50, 77, 0.03);
+}
+
+.col-num {
+    width: 50px;
+    text-align: center;
+    color: var(--gris-500);
+}
+
+.col-unidad {
+    font-weight: 600;
+    color: var(--navy-700);
+}
+
+.col-deuda {
+    text-align: right;
+    font-weight: 700;
+    color: var(--rojo);
+    white-space: nowrap;
+}
+
+.total-row {
+    background: var(--gold-suave);
+}
+.total-row td {
+    padding: 12px 14px;
+    font-size: 1.1rem;
+    color: var(--navy-800);
+    border-bottom: none;
+}
+.total-row .col-deuda {
+    color: var(--rojo);
+    font-size: 1.1rem;
+}
+
+.sin-deudores {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--verde);
+}
+.sin-deudores i { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+.sin-deudores p { font-size: 1rem; font-weight: 600; }
+
+.nota {
+    background: #e0effa;
+    border-left: 4px solid var(--accent);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--navy-600);
+    margin-top: 20px;
+}
+
+.doc-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 46px;
+    color: var(--navy-700);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    body { padding: 14px; }
+    .reporte-doc { padding: 22px 18px; border-radius: 12px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar .btn { justify-content: center; }
+    .doc-num { text-align: left; }
+    .resumen-row { flex-direction: column; }
+    .doc-footer { flex-direction: column; gap: 12px; }
+}
+
+/* Modal de impresión */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 32px;
+    min-width: 380px;
+    max-width: 480px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(22, 50, 77, 0.12);
+}
+
+.modal-box h3 {
+    margin: 0 0 18px 0;
+    font-size: 1.1rem;
+    color: var(--navy-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--humo);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    color: var(--navy-700);
+    margin-bottom: 20px;
+    user-select: none;
+}
+
+.modal-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--navy-800);
+    cursor: pointer;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+@media print {
+    .modal-overlay { display: none !important; }
+}
+
+@media print {
+    body { background: #fff; padding: 0; font-size: 10pt; }
+    .no-print, .toolbar { display: none !important; }
+
+    .reporte-doc {
+        box-shadow: none; border: none; padding: 0; border-radius: 0; max-width: 100%;
+    }
+
+    .doc-header { border-bottom: 2px solid #000; padding-bottom: 10px; }
+    .brand h1 { color: #000; font-size: 14pt; }
+    .brand i { color: #333; }
+    .doc-num strong { color: #000; }
+    .doc-num span { background: #000; color: #fff; padding: 4px 10px; }
+
+    .resumen-row { gap: 8px; }
+    .resumen-item { background: #f5f5f5; border: 1px solid #ccc; }
+    .resumen-value { color: #000; }
+    .resumen-value--danger { color: #c00; }
+
+    .doc-table--deudores { border-collapse: collapse; table-layout: fixed; width: 100%; }
+    .doc-table--deudores th {
+        background: #333 !important; color: #fff !important;
+        border: 1px solid #000; padding: 6px 10px;     font-size: 10pt;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .doc-table--deudores td {
+        border: 1px solid #ccc; padding: 6px 10px; font-size: 11pt; color: #000;
+    }
+    .doc-table--deudores tbody tr:hover { background: transparent; }
+
+    .col-num { color: #555; }
+    .col-deuda { color: #000; font-weight: 700; }
+
+    .total-row { background: #e8e8e8 !important; }
+    .total-row td { color: #000; font-weight: 700; font-size: 11.5pt; }
+    .total-row .col-deuda { color: #000; }
+    .total-row, .total-row td, .total-row th {
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+
+    .nota { background: #f0f0f0; border-left: 3px solid #333; color: #333; }
+
+    .doc-footer { margin-top: 30px; }
+    .doc-footer div { color: #000; }
+}

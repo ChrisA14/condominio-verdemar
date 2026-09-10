@@ -1,0 +1,132 @@
+/* =========================================================
+   VERDETALLES.CSS - Vista de detalle de persona (ver_persona.php)
+   Extiende Estilo/global.css (paleta azul marino)
+   ========================================================= */
+
+.container {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--navy-700);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(22, 50, 77, 0.18);
+    margin-bottom: 16px;
+    transition: background-color 0.15s ease;
+}
+.back-button:hover { background: #ffffff; color: var(--navy-700); }
+
+.detail-box {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-lg);
+    padding: clamp(20px, 3vw, 30px);
+    margin-bottom: 22px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid rgba(10, 26, 46, 0.10);
+    padding-bottom: 22px;
+    margin-bottom: 24px;
+}
+
+.header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.4rem;
+    word-break: break-word;
+}
+
+.header h2 .bi { color: var(--accent); }
+
+.section {
+    margin-bottom: 26px;
+}
+
+.section h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.section h3 .bi { color: var(--accent); }
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.section-title .bi { color: var(--accent); }
+.section-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(22, 50, 77, 0.18), transparent);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px 26px;
+}
+
+.detail-item {
+    background: rgba(238, 241, 245, 0.7);
+    border: 1px solid rgba(22, 50, 77, 0.08);
+    border-radius: var(--radio);
+    padding: 14px 18px;
+    word-break: break-word;
+}
+
+.detail-item label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gris-500);
+    margin-bottom: 6px;
+}
+
+.detail-item span {
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: var(--navy-800);
+}
+
+@media (max-width: 768px) {
+    .header { flex-direction: column; align-items: flex-start; }
+    .header h2 { font-size: 1.2rem; }
+    .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+    .detail-box { padding: 18px; border-radius: 16px; }
+    .detail-item { padding: 12px 14px; }
+}
