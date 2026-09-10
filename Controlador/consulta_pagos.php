@@ -48,8 +48,8 @@ $types .= str_repeat('i', count($unidades_filtro[1]));
 
 $count_sql = "SELECT COUNT(*) AS total
               FROM pagos p
-              JOIN cuotas_emitidas c ON p.cuota_id = c.id
-              JOIN unidades u ON c.unidad_id = u.id
+              JOIN unidades u ON u.id = p.unidad_id
+              LEFT JOIN cuotas_emitidas c ON p.cuota_id = c.id
               $where_sql";
 $stmt = $connect->prepare($count_sql);
 if (!empty($params)) $stmt->bind_param($types, ...$params);
@@ -59,15 +59,15 @@ $stmt->close();
 $total_paginas = ceil($total_pagos / $por_pagina);
 
 $sql = "SELECT p.id, p.monto, p.metodo_pago, p.referencia, p.fecha_pago, p.registrado_por, p.nota,
-               p.tasa_bs, p.monto_bs,
+               p.tasa_bs, p.monto_bs, p.tipo,
                u.torre, u.numero,
                c.periodo_mes, c.periodo_anio,
-               co.nombre AS concepto,
+               COALESCE(co.nombre, 'Anticipo / Saldo a favor') AS concepto,
                cp.solicitado_por_nombre AS declarado_por
         FROM pagos p
-        JOIN cuotas_emitidas c ON p.cuota_id = c.id
-        JOIN unidades u ON c.unidad_id = u.id
-        JOIN conceptos_cobro co ON c.concepto_id = co.id
+        JOIN unidades u ON u.id = p.unidad_id
+        LEFT JOIN cuotas_emitidas c ON p.cuota_id = c.id
+        LEFT JOIN conceptos_cobro co ON c.concepto_id = co.id
         LEFT JOIN comprobantes_pago cp ON cp.id = p.comprobante_id
         $where_sql
         ORDER BY p.fecha_pago DESC, p.id DESC

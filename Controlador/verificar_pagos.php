@@ -2,6 +2,7 @@
 include("../Modelo/conexiondb.php");
 include("../Modelo/config.php");
 include("../Modelo/auth.php");
+include("../Modelo/pagos.php");
 requireRol(['admin', 'junta']);
 
 $usuario = $_SESSION['usuario'] ?? '';
@@ -15,7 +16,7 @@ if (isset($_POST['aprobar-comprobante']) && isset($_POST['comp_id'])) {
         $stmt = $connect->prepare(
             "SELECT c.id, c.cuota_id, c.monto, c.metodo_pago, c.referencia, c.fecha_pago,
                     c.tasa_bs, c.monto_bs,
-                    cu.monto AS cuota_monto, cu.monto_pagado
+                    cu.unidad_id, cu.monto AS cuota_monto, cu.monto_pagado
              FROM comprobantes_pago c
              JOIN cuotas_emitidas cu ON cu.id = c.cuota_id
              WHERE c.id = ? AND c.estado = 'pendiente'"
@@ -29,25 +30,16 @@ if (isset($_POST['aprobar-comprobante']) && isset($_POST['comp_id'])) {
 
         $connect->begin_transaction();
 
-        // Crear pago
-        $insert = $connect->prepare(
-            "INSERT INTO pagos (cuota_id, monto, metodo_pago, referencia, fecha_pago, registrado_por, nota, comprobante_id, tasa_bs, monto_bs)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        // Distribuir el pago aprobado sobre TODAS las cuotas abiertas de la
+        // unidad (más antigua primero). El sobrante pasa a saldo a favor.
+        $monto = (float)$comp['monto'];
+        $tasa_comp = $comp['tasa_bs'] !== null ? (float)$comp['tasa_bs'] : null;
+        $res = aplicarPagoUnidad(
+            $connect, (int)$comp['unidad_id'], $monto,
+            $comp['metodo_pago'], $comp['referencia'], $comp['fecha_pago'],
+            $usuario, "Pago aprobado de comprobante #$comp_id",
+            $comp_id, $tasa_comp
         );
-        $nota_pago = "Pago aprobado de comprobante #$comp_id";
-        $insert->bind_param("idsssssidd", $comp['cuota_id'], $comp['monto'], $comp['metodo_pago'], $comp['referencia'], $comp['fecha_pago'], $usuario, $nota_pago, $comp_id, $comp['tasa_bs'], $comp['monto_bs']);
-        if (!$insert->execute()) throw new Exception("Error al crear el pago: " . $insert->error);
-        $pago_id = $insert->insert_id;
-        $insert->close();
-
-        // Actualizar cuota
-        $nuevo_pagado = (float)$comp['monto_pagado'] + (float)$comp['monto'];
-        $nuevo_pagado = min($nuevo_pagado, (float)$comp['cuota_monto']);
-        $nuevo_estado = ($nuevo_pagado >= (float)$comp['cuota_monto'] - 0.001) ? 'pagada' : 'parcial';
-        $upd = $connect->prepare("UPDATE cuotas_emitidas SET monto_pagado = ?, estado = ? WHERE id = ?");
-        $upd->bind_param("dsi", $nuevo_pagado, $nuevo_estado, $comp['cuota_id']);
-        if (!$upd->execute()) throw new Exception("Error al actualizar la cuota: " . $upd->error);
-        $upd->close();
 
         // Marcar comprobante aprobado
         $upd = $connect->prepare(
@@ -60,8 +52,13 @@ if (isset($_POST['aprobar-comprobante']) && isset($_POST['comp_id'])) {
         $connect->commit();
 
         $_SESSION['tipo_mensaje'] = 'success';
-        $msg_bs = !empty($comp['monto_bs']) ? " (Bs " . number_format((float)$comp['monto_bs'], 2, ',', '.') . ")" : "";
-        $_SESSION['mensaje'] = "✅ Comprobante #$comp_id aprobado: pago de $" . number_format((float)$comp['monto'], 2) . $msg_bs . " registrado (pago #$pago_id)";
+        $msg_bs = $tasa_comp !== null ? " (Bs " . number_format($monto * $tasa_comp, 2, ',', '.') . ")" : "";
+        $detalle = "Pagado a cuotas: $" . number_format($res['aplicado'], 2);
+        if ($res['anticipo'] > 0) {
+            $detalle .= " · saldo a favor: $" . number_format($res['anticipo'], 2);
+        }
+        $_SESSION['mensaje'] = "✅ Comprobante #$comp_id aprobado: $" . number_format($monto, 2) . $msg_bs
+            . " aplicado ($detalle)";
     } catch (Exception $e) {
         if ($connect->errno) $connect->rollback();
         $_SESSION['tipo_mensaje'] = 'error';

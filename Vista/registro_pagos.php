@@ -40,6 +40,12 @@ include("../Controlador/registro_pagos.php");
           Seleccione el aviso a pagar, indique el monto y adjunte su comprobante (foto desde la cámara del celular o archivo PDF/JPG/PNG, máx 5 MB).
           La declaración quedará pendiente de verificación por la administración.
         </div>
+      <?php else: ?>
+        <div class="nota-declarar">
+          <i class="bi bi-info-circle"></i>
+          Pago flexible: puede pagar <strong>menos</strong> (queda saldo parcial) o <strong>más</strong> del saldo del aviso. Si paga más,
+          el sobrante cubre otras cuotas de la unidad (la más antigua primero) y el excedente queda como <strong>saldo a favor</strong> para futuros cobros.
+        </div>
       <?php endif; ?>
 
       <form action="registro_pagos.php" method="post" enctype="multipart/form-data" autocomplete="off">
@@ -49,13 +55,19 @@ include("../Controlador/registro_pagos.php");
             <label for="cuota_id"><?php echo $es_gestor ? 'Aviso de cobro (con saldo pendiente)' : 'Aviso de cobro de su unidad (con saldo pendiente)'; ?>: <span class="requerido">*</span></label>
             <select id="cuota_id" name="cuota_id" required onchange="actualizarMonto()">
               <option value="">Seleccione el aviso</option>
-              <?php foreach ($cuotas as $c): ?>
+              <?php
+              $sf = isset($_GET['unidad_id']) ? (int)$_GET['unidad_id'] : 0;
+              $ids_mostrados = [];
+              foreach ($cuotas as $c):
+                  $tiene_sf = isset($saldos_favor[(int)$c['unidad_id']]) && $saldos_favor[(int)$c['unidad_id']] > 0;
+              ?>
                 <option value="<?php echo $c['id']; ?>"
                   <?php echo ($cuota_preseleccionada == $c['id']) ? 'selected' : ''; ?>
                   data-saldo="<?php echo (float)$c['saldo']; ?>">
                   <?php echo htmlspecialchars($c['numero']) . ' · ' . htmlspecialchars($c['concepto'])
                     . ' · ' . getNombreMes($c['periodo_mes']) . ' ' . $c['periodo_anio']
-                    . ' (saldo $' . number_format((float)$c['saldo'], 2) . ')'; ?>
+                    . ' (saldo $' . number_format((float)$c['saldo'], 2) . ')'
+                    . ($tiene_sf ? ' ⭐ saldo a favor $' . number_format($saldos_favor[(int)$c['unidad_id']], 2) : ''); ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -80,6 +92,7 @@ include("../Controlador/registro_pagos.php");
               <label for="monto">Monto ($): <span class="requerido">*</span></label>
               <input type="number" id="monto" name="monto" step="0.01" min="0.01" required placeholder="0.00"
                      oninput="calcularBs()">
+              <small class="field-note">Puede pagar menos (pago parcial) o más (sobrante → saldo a favor).</small>
             </div>
             <div class="form-group">
               <label for="monto_bs_read">Equivalente (Bs):</label>
@@ -165,10 +178,12 @@ include("../Controlador/registro_pagos.php");
   function actualizarMonto() {
       const sel = document.getElementById('cuota_id');
       if (!sel) return;
-      document.getElementById('monto').readOnly = sel.value !== '';
       const opt = sel.selectedOptions[0];
       if (opt && opt.dataset.saldo) {
+          // Precargar el saldo, pero el monto permanece editable por el usuario
           document.getElementById('monto').value = opt.dataset.saldo;
+      } else {
+          document.getElementById('monto').value = '';
       }
       calcularBs();
   }

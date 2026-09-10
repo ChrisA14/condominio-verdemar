@@ -50,96 +50,89 @@ $accesoTotal = tieneAccesoTotal();
 
     <?php if ($accesoTotal): ?>
 
-    <!-- Grid de módulos - ADMIN / JUNTA -->
-    <div class="modules-grid">
-      <a href="consulta_personas.php" class="module-card card-consulta">
-        <div class="module-icon ic-1"><i class="bi bi-people-fill"></i></div>
-        <div class="module-body">
-          <h3>Personas</h3>
-          <p>Registrar, buscar y administrar propietarios, inquilinos y miembros de la junta.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
+    <!-- Acordeón - ADMIN / JUNTA -->
+    <div class="accordion" id="dashboard-accordion">
 
-      <a href="consulta_unidades.php" class="module-card card-unidades">
-        <div class="module-icon ic-2"><i class="bi bi-buildings-fill"></i></div>
-        <div class="module-body">
-          <h3>Unidades</h3>
-          <p>Catálogo de apartamentos, estacionamientos y locales del condominio.</p>
+      <!-- EDIFICIOS -->
+      <div class="accordion-item open">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="module-icon ic-2"><i class="bi bi-buildings-fill"></i></div>
+          <div class="trigger-body">
+            <h3>Edificios</h3>
+            <p>Personas, unidades y usuarios del condominio.</p>
+          </div>
+          <i class="bi bi-chevron-down accordion-chevron"></i>
+        </button>
+        <div class="accordion-panel">
+          <div class="accordion-panel-inner">
+            <div class="accordion-links">
+              <a href="consulta_personas.php" class="accordion-link">
+                <span class="link-icon link-ic-blue"><i class="bi bi-people-fill"></i></span>
+                <span class="link-text"><strong>Personas</strong><span>Registrar, buscar y administrar propietarios, inquilinos y junta.</span></span>
+              </a>
+              <a href="consulta_unidades.php" class="accordion-link">
+                <span class="link-icon link-ic-green"><i class="bi bi-buildings"></i></span>
+                <span class="link-text"><strong>Unidades</strong><span>Catálogo de apartamentos, estacionamientos y locales.</span></span>
+              </a>
+              <?php if ($esAdmin): ?>
+              <a href="usuario.php" class="accordion-link">
+                <span class="link-icon link-ic-orange"><i class="bi bi-shield-lock-fill"></i></span>
+                <span class="link-text"><strong>Usuarios</strong><span>Crear cuentas y asignar roles de acceso al sistema.</span></span>
+              </a>
+              <?php endif; ?>
+            </div>
+          </div>
         </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
+      </div>
 
-      <a href="avisos_cobro.php" class="module-card card-avsicos">
-        <div class="module-icon ic-4"><i class="bi bi-receipt"></i></div>
-        <div class="module-body">
-          <h3>Avisos de Cobro</h3>
-          <p>Generar cuotas mensuales, emitir avisos por unidad y controlar vencimientos.</p>
+      <!-- FINANZAS -->
+      <div class="accordion-item">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="module-icon ic-4"><i class="bi bi-receipt-cutoff"></i></div>
+          <div class="trigger-body">
+            <h3>Finanzas</h3>
+            <p>Cobros, pagos, verificación y reportes del condominio.</p>
+          </div>
+          <i class="bi bi-chevron-down accordion-chevron"></i>
+        </button>
+        <div class="accordion-panel">
+          <div class="accordion-panel-inner">
+            <div class="accordion-links">
+              <a href="avisos_cobro.php" class="accordion-link">
+                <span class="link-icon link-ic-gold"><i class="bi bi-receipt"></i></span>
+                <span class="link-text"><strong>Avisos de Cobro</strong><span>Generar cuotas mensuales y controlar vencimientos.</span></span>
+              </a>
+              <a href="gestion_cobros.php" class="accordion-link">
+                <span class="link-icon link-ic-orange"><i class="bi bi-cash-coin"></i></span>
+                <span class="link-text"><strong>Cobros Especiales</strong><span>Multas, bonos, ajustes y gastos extraordinarios.</span></span>
+              </a>
+              <a href="registro_pagos.php" class="accordion-link">
+                <span class="link-icon link-ic-blue"><i class="bi bi-cash-stack"></i></span>
+                <span class="link-text"><strong>Registro de Pagos</strong><span>Aplicar pagos directos a cuotas por unidad.</span></span>
+              </a>
+              <a href="verificar_pagos.php" class="accordion-link">
+                <span class="link-icon link-ic-green"><i class="bi bi-clipboard-check"></i></span>
+                <span class="link-text"><strong>Verificación de Pagos</strong><span>Aprobar o rechazar comprobantes de propietarios.</span></span>
+              </a>
+              <a href="consulta_pagos.php" class="accordion-link">
+                <span class="link-icon link-ic-navy"><i class="bi bi-clock-history"></i></span>
+                <span class="link-text"><strong>Historial de Pagos</strong><span>Buscar y consultar pagos registrados.</span></span>
+              </a>
+              <a href="reporte_deudores.php" class="accordion-link">
+                <span class="link-icon link-ic-red"><i class="bi bi-exclamation-triangle"></i></span>
+                <span class="link-text"><strong>Reporte de Deudores</strong><span>Unidades con deuda y estado de la comunidad.</span></span>
+              </a>
+            </div>
+          </div>
         </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
+      </div>
 
-      <a href="registro_pagos.php" class="module-card card-pagos">
-        <div class="module-icon ic-3"><i class="bi bi-cash-coin"></i></div>
-        <div class="module-body">
-          <h3>Registro de Pagos</h3>
-          <p>Aplicar pagos directos a las cuotas emitidas por cada unidad del condominio.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-
-      <a href="verificar_pagos.php" class="module-card card-pagos">
-        <div class="module-icon ic-4"><i class="bi bi-clipboard-check"></i></div>
-        <div class="module-body">
-          <h3>Verificación de Pagos</h3>
-          <p>Aprobar o rechazar comprobantes declarados por propietarios e inquilinos.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-
-      <a href="consulta_pagos.php" class="module-card card-consulta">
-        <div class="module-icon ic-1"><i class="bi bi-cash-stack"></i></div>
-        <div class="module-body">
-          <h3>Historial de Pagos</h3>
-          <p>Buscar y consultar el historial completo de pagos registrados.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-
-      <a href="reporte_deudores.php" class="module-card card-deudores">
-        <div class="module-icon ic-2"><i class="bi bi-exclamation-triangle"></i></div>
-        <div class="module-body">
-          <h3>Reporte de Deudores</h3>
-          <p>Unidades con deuda pendiente, saldos y estado general de la comunidad.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-
-      <?php if ($esAdmin): ?>
-      <a href="usuario.php" class="module-card card-usuarios">
-        <div class="module-icon ic-3"><i class="bi bi-shield-lock-fill"></i></div>
-        <div class="module-body">
-          <h3>Gestión de Usuarios</h3>
-          <p>Crear cuentas y asignar roles de acceso al sistema.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-      <?php endif; ?>
     </div>
 
     <?php else: ?>
 
-    <!-- Grid de módulos - PROPIETARIO / INQUILINO -->
-    <div class="modules-grid">
-      <a href="avisos_cobro.php" class="module-card card-avsicos">
-        <div class="module-icon ic-4"><i class="bi bi-receipt"></i></div>
-        <div class="module-body">
-          <h3>Mis Avisos de Cobro</h3>
-          <p>Consulte su estado de cuenta: cuotas adeudadas y fechas de vencimiento.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-
+    <!-- PROPIETARIO / INQUILINO -->
+    <div class="modules-grid" style="margin-bottom:16px;">
       <a href="registro_pagos.php" class="module-card card-pagos">
         <div class="module-icon ic-3"><i class="bi bi-upload"></i></div>
         <div class="module-body">
@@ -148,27 +141,52 @@ $accesoTotal = tieneAccesoTotal();
         </div>
         <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
       </a>
+    </div>
 
-      <a href="reporte_deudores.php" class="module-card card-deudores">
-        <div class="module-icon ic-2"><i class="bi bi-wallet2"></i></div>
-        <div class="module-body">
-          <h3>Mi Estado de Cuenta</h3>
-          <p>Saldo pendiente y resumen de deuda de sus unidades.</p>
+    <div class="accordion">
+      <div class="accordion-item">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="module-icon ic-4"><i class="bi bi-wallet2"></i></div>
+          <div class="trigger-body">
+            <h3>Mis Finanzas</h3>
+            <p>Avisos de cobro, estado de cuenta e historial de pagos.</p>
+          </div>
+          <i class="bi bi-chevron-down accordion-chevron"></i>
+        </button>
+        <div class="accordion-panel">
+          <div class="accordion-panel-inner">
+            <div class="accordion-links">
+              <a href="avisos_cobro.php" class="accordion-link">
+                <span class="link-icon link-ic-gold"><i class="bi bi-receipt"></i></span>
+                <span class="link-text"><strong>Mis Avisos de Cobro</strong><span>Cuotas adeudadas y fechas de vencimiento.</span></span>
+              </a>
+              <a href="reporte_deudores.php" class="accordion-link">
+                <span class="link-icon link-ic-red"><i class="bi bi-wallet2"></i></span>
+                <span class="link-text"><strong>Mi Estado de Cuenta</strong><span>Saldo pendiente, vencido y resumen de deuda.</span></span>
+              </a>
+              <a href="consulta_pagos.php" class="accordion-link">
+                <span class="link-icon link-ic-blue"><i class="bi bi-cash-stack"></i></span>
+                <span class="link-text"><strong>Mis Pagos</strong><span>Historial de pagos aplicados a sus cuotas.</span></span>
+              </a>
+            </div>
+          </div>
         </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
-
-      <a href="consulta_pagos.php" class="module-card card-pagos">
-        <div class="module-icon ic-1"><i class="bi bi-cash-stack"></i></div>
-        <div class="module-body">
-          <h3>Mis Pagos</h3>
-          <p>Historial de pagos aplicados a sus cuotas.</p>
-        </div>
-        <span class="module-arrow"><i class="bi bi-arrow-right-circle"></i></span>
-      </a>
+      </div>
     </div>
 
     <?php endif; ?>
   </div>
+
+  <script>
+  function toggleAccordion(btn) {
+    var item = btn.closest('.accordion-item');
+    var wasOpen = item.classList.contains('open');
+    var accordion = item.closest('.accordion');
+    accordion.querySelectorAll('.accordion-item').forEach(function(el) {
+      el.classList.remove('open');
+    });
+    if (!wasOpen) item.classList.add('open');
+  }
+  </script>
 </body>
 </html>

@@ -62,8 +62,10 @@ $es_gestor = tieneAccesoTotal();
                 <td data-label="Recibo"><strong>#<?php echo $pg['id']; ?></strong></td>
                 <td data-label="Fecha"><?php echo date('d/m/Y', strtotime($pg['fecha_pago'])); ?></td>
                 <td data-label="Unidad"><?php echo htmlspecialchars($pg['numero']); ?></td>
-                <td data-label="Concepto"><?php echo htmlspecialchars($pg['concepto']); ?></td>
-                <td data-label="Periodo"><?php echo getNombreMes($pg['periodo_mes']) . ' ' . $pg['periodo_anio']; ?></td>
+                <td data-label="Concepto"><?php echo htmlspecialchars($pg['concepto']); ?>
+                <?php if (($pg['tipo'] ?? '') === 'anticipo'): ?><br><small style="color:var(--navy-500);">(saldo a favor)</small><?php endif; ?></td>
+                <td data-label="Periodo"><?php echo (!empty($pg['periodo_mes']) && !empty($pg['periodo_anio']))
+                    ? getNombreMes($pg['periodo_mes']) . ' ' . $pg['periodo_anio'] : '—'; ?></td>
                 <td data-label="Monto ($)" style="color:var(--verde);font-weight:700;">$<?php echo number_format((float)$pg['monto'], 2); ?></td>
                 <td data-label="Monto (Bs)" style="color:#1a7a42;font-weight:700;">
                   <?php echo !empty($pg['monto_bs']) ? 'Bs ' . number_format((float)$pg['monto_bs'], 2, ',', '.') : '—'; ?>

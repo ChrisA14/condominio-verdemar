@@ -2,6 +2,7 @@
 include("../Modelo/conexiondb.php");
 include("../Modelo/config.php");
 include("../Modelo/auth.php");
+include("../Modelo/pagos.php");
 requireLogin();
 
 $es_gestor = tieneAccesoTotal();
@@ -50,7 +51,7 @@ if ($aviso_unidad_id > 0) {
 $cuotas = [];
 if ($es_gestor) {
     $cuotas = $connect->query(
-        "SELECT c.id, c.periodo_mes, c.periodo_anio, c.monto, c.monto_pagado,
+        "SELECT c.id, c.unidad_id, c.periodo_mes, c.periodo_anio, c.monto, c.monto_pagado,
                 (c.monto - c.monto_pagado) AS saldo, u.torre, u.numero, co.nombre AS concepto
          FROM cuotas_emitidas c
          JOIN unidades u ON c.unidad_id = u.id
@@ -64,7 +65,7 @@ if ($es_gestor) {
     if (!empty($ids)) {
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $connect->prepare(
-            "SELECT c.id, c.periodo_mes, c.periodo_anio, c.monto, c.monto_pagado,
+            "SELECT c.id, c.unidad_id, c.periodo_mes, c.periodo_anio, c.monto, c.monto_pagado,
                     (c.monto - c.monto_pagado) AS saldo, u.torre, u.numero, co.nombre AS concepto
              FROM cuotas_emitidas c
              JOIN unidades u ON c.unidad_id = u.id
@@ -80,6 +81,24 @@ if ($es_gestor) {
         $stmt->close();
     }
 }
+
+// Saldos a favor de las unidades visibles (para mostrarlos en el selector)
+$saldos_favor = [];
+if ($es_gestor) {
+    $rows = $connect->query("SELECT s.unidad_id, s.saldo FROM saldos s WHERE s.saldo > 0.001")->fetch_all(MYSQLI_ASSOC);
+} else {
+    $ids = getUnidadesPermitidas($connect);
+    $rows = [];
+    if (!empty($ids)) {
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $st = $connect->prepare("SELECT s.unidad_id, s.saldo FROM saldos s WHERE s.saldo > 0.001 AND s.unidad_id IN ($ph)");
+        $st->bind_param(str_repeat('i', count($ids)), ...$ids);
+        $st->execute();
+        $rows = $st->get_result()->fetch_all(MYSQLI_ASSOC);
+        $st->close();
+    }
+}
+foreach ($rows as $r) $saldos_favor[(int)$r['unidad_id']] = (float)$r['saldo'];
 
 // ------------------------------------------------------------------
 // REGISTRAR PAGO DIRECTO (gestor) o DECLARAR PAGO CON COMPROBANTE (consumidor)
@@ -99,7 +118,9 @@ if (isset($_POST['pagar-btn'])) {
             throw new Exception("Debe seleccionar un aviso y un monto mayor a cero");
         }
 
-        $stmt = $connect->prepare("SELECT id, monto, monto_pagado, unidad_id FROM cuotas_emitidas WHERE id = ?");
+        $stmt = $connect->prepare("SELECT c.id, c.monto, c.monto_pagado, c.unidad_id, u.numero
+                               FROM cuotas_emitidas c JOIN unidades u ON u.id = c.unidad_id
+                               WHERE c.id = ?");
         $stmt->bind_param("i", $cuota_id);
         $stmt->execute();
         $cu = $stmt->get_result()->fetch_assoc();
@@ -107,43 +128,42 @@ if (isset($_POST['pagar-btn'])) {
 
         if (!$cu) throw new Exception("El aviso seleccionado no existe");
 
+        $unidad_id = (int)$cu['unidad_id'];
+
         // Verificar permisos del consumidor
         if (!$es_gestor) {
             $ids = getUnidadesPermitidas($connect);
-            if (!in_array((int)$cu['unidad_id'], array_map('intval', $ids ?: []))) {
+            if (!in_array($unidad_id, array_map('intval', $ids ?: []))) {
                 throw new Exception("No tiene permiso para pagar esta cuota");
             }
         }
 
         $saldo = (float)$cu['monto'] - (float)$cu['monto_pagado'];
-        if ($monto > $saldo + 0.001) {
-            throw new Exception("El monto excede el saldo pendiente ($" . number_format($saldo, 2) . ")");
-        }
+        $saldo_a_favor = obtenerSaldoAFavor($connect, $unidad_id);
 
         if ($es_gestor) {
-            // Registro directo del pago (flujo actual del admin)
+            // Registro directo del pago (flujo del admin/junta)
+            // El monto NO está limitado: si es menor es pago parcial y si es
+            // mayor, el sobrante cubre otras cuotas o pasa a saldo a favor.
             $connect->begin_transaction();
 
-            $insert = $connect->prepare(
-                "INSERT INTO pagos (cuota_id, monto, metodo_pago, referencia, fecha_pago, registrado_por, nota, tasa_bs, monto_bs)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            $res = aplicarPagoUnidad(
+                $connect, $unidad_id, $monto, $metodo_pago, $referencia,
+                $fecha_pago, $usuario, $nota, null, $tasa_bs
             );
-            $monto_bs_pago = convertirABolivares($monto, $tasa_bs);
-            $insert->bind_param("idsssssss", $cuota_id, $monto, $metodo_pago, $referencia, $fecha_pago, $usuario, $nota, $tasa_bs, $monto_bs_pago);
-            if (!$insert->execute()) throw new Exception("Error al registrar el pago: " . $insert->error);
-            $insert->close();
-
-            $nuevo_pagado = (float)$cu['monto_pagado'] + $monto;
-            $nuevo_estado = ($nuevo_pagado >= (float)$cu['monto'] - 0.001) ? 'pagada' : 'parcial';
-            $upd = $connect->prepare("UPDATE cuotas_emitidas SET monto_pagado = ?, estado = ? WHERE id = ?");
-            $upd->bind_param("dsi", $nuevo_pagado, $nuevo_estado, $cuota_id);
-            if (!$upd->execute()) throw new Exception("Error al actualizar el aviso: " . $upd->error);
-            $upd->close();
 
             $connect->commit();
+
+            $msg_bs = $tasa_bs !== null ? " (Bs " . number_format($monto * $tasa_bs, 2, ',', '.') . ")" : "";
+            $detalle = [];
+            $detalle[] = "Pagado: $" . number_format($res['aplicado'], 2);
+            if ($res['anticipo'] > 0) {
+                $detalle[] = "saldo a favor: $" . number_format($res['anticipo'], 2);
+            }
             $_SESSION['tipo_mensaje'] = 'success';
-            $msg_bs = $monto_bs_pago !== null ? " (Bs " . number_format($monto_bs_pago, 2, ',', '.') . ")" : "";
-            $_SESSION['mensaje'] = "✅ Pago de $" . number_format($monto, 2) . $msg_bs . " registrado correctamente";
+            $_SESSION['mensaje'] = "✅ Pago de $" . number_format($monto, 2) . $msg_bs
+                . " registrado y aplicado a la unidad " . htmlspecialchars($cu['numero'] ?? '')
+                . " (" . implode(' · ', $detalle) . ")";
             header("Location: ../Vista/consulta_pagos.php");
             exit();
 

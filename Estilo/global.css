@@ -231,6 +231,7 @@ a:hover { color: var(--accent-hover); }
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap;
     transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -247,7 +248,7 @@ a:hover { color: var(--accent-hover); }
 }
 .btn-back:hover { background: #ffffff; }
 
-.btn-danger-soft { background: var(--rojo-suave); color: var(--rojo-hover); }
+.btn-danger-soft { background: var(--rojo-suave); color: var(--rojo-hover); white-space: nowrap; }
 .btn-danger-soft:hover { background: #f6d5d3; }
 
 /* ---------------------------------------------------------
@@ -467,7 +468,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover { background: rgba(74, 163, 223, 0.10); }
 
-.action-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.action-buttons { display: flex; gap: 8px; flex-wrap: nowrap; align-items: center; }
 
 /* ---------------------------------------------------------
    BADGES
@@ -667,7 +668,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; marg
 
     .data-table td[colspan]::before { display: none; }
 
-    .action-buttons { justify-content: flex-start; }
+    .action-buttons { justify-content: flex-start; flex-wrap: wrap; }
 }
 
 /* Telefonos muy pequeños (480p) */

@@ -76,12 +76,12 @@ include("../Controlador/avisos_cobro.php");
             <tr>
               <th>Unidad</th><th>Responsable</th><th>Período</th>
               <th>Deuda Total</th><th>Pagado</th><th>Saldo ($)</th><th>Saldo (Bs)</th>
-              <th>Estado</th><th>Acciones</th>
+              <th>Saldo a Favor</th><th>Sld. Neto</th><th>Estado</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <?php if (empty($unidades_deuda)): ?>
-              <tr><td colspan="9" style="text-align:center;padding:30px;">No hay unidades con deuda pendiente</td></tr>
+              <tr><td colspan="11" style="text-align:center;padding:30px;">No hay unidades con deuda pendiente</td></tr>
             <?php else: foreach ($unidades_deuda as $ud): ?>
               <?php
                 $estado_resumen = 'pendiente';
@@ -106,6 +106,16 @@ include("../Controlador/avisos_cobro.php");
                   $saldo_bs = convertirABolivares((float)$ud['saldo'], $tasa_bs);
                   echo $saldo_bs !== null ? 'Bs ' . number_format($saldo_bs, 2, ',', '.') : '—';
                   ?>
+                </td>
+                <td data-label="Saldo a Favor" style="color:var(--verde);">
+                  <?php if ((float)$ud['saldo_favor'] > 0): ?>
+                    -$<?php echo number_format((float)$ud['saldo_favor'], 2); ?>
+                  <?php else: ?>
+                    —
+                  <?php endif; ?>
+                </td>
+                <td data-label="Sld. Neto" style="color:var(--rojo);font-weight:700;">
+                  $<?php echo number_format((float)$ud['saldo_neto'], 2); ?>
                 </td>
                 <td data-label="Estado">
                   <span class="badge <?php echo $claseEstado; ?>"><?php echo ESTADOS_CUOTA[$estado_resumen]; ?></span>

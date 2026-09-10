@@ -96,6 +96,24 @@ include("../Controlador/vista_aviso.php");
             echo $total_saldo_bs !== null ? 'Bs ' . number_format($total_saldo_bs, 2, ',', '.') : '—';
           ?></td>
         </tr>
+        <?php if ((float)$aviso['saldo_favor'] > 0): ?>
+        <tr class="pagado">
+          <td colspan="5">Saldo a favor (anticipo) <i class="bi bi-star-fill"></i></td>
+          <td colspan="2" style="color:var(--verde);font-weight:700;">-$<?php echo number_format((float)$aviso['saldo_favor'], 2); ?></td>
+          <td style="color:#1a7a42;"><?php
+            $sf_bs = convertirABolivares((float)$aviso['saldo_favor'], $tasa_bs);
+            echo $sf_bs !== null ? 'Bs ' . number_format($sf_bs, 2, ',', '.') : '—';
+          ?></td>
+        </tr>
+        <tr class="total">
+          <td colspan="5">Saldo neto a pagar</td>
+          <td colspan="2">$<?php echo number_format(max((float)$aviso['saldo_neto'], 0), 2); ?></td>
+          <td style="color:#1a7a42;font-weight:700;"><?php
+            $sn_bs = convertirABolivares(max((float)$aviso['saldo_neto'], 0), $tasa_bs);
+            echo $sn_bs !== null ? 'Bs ' . number_format($sn_bs, 2, ',', '.') : '—';
+          ?></td>
+        </tr>
+        <?php endif; ?>
       </tbody>
     </table>
 

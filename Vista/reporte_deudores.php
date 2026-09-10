@@ -58,6 +58,10 @@ include("../Controlador/reporte_deudores.php");
         <span class="resumen-label">Pendiente de cobro</span>
         <span class="resumen-value resumen-value--danger">$<?php echo number_format($resumen['pendiente'], 2); ?></span>
       </div>
+      <div class="resumen-item">
+        <span class="resumen-label">Saldo a favor (comunidad)</span>
+        <span class="resumen-value resumen-value--ok">$<?php echo number_format($resumen['saldo_favor'], 2); ?></span>
+      </div>
       <?php endif; ?>
       <div class="resumen-item">
         <span class="resumen-label">Deuda total</span>
@@ -71,6 +75,7 @@ include("../Controlador/reporte_deudores.php");
         <tr>
           <th class="col-num">#</th>
           <th class="col-unidad">Unidad</th>
+          <th class="col-unidad">Saldo a Favor</th>
           <th class="col-deuda">Deuda Total</th>
         </tr>
       </thead>
@@ -79,13 +84,14 @@ include("../Controlador/reporte_deudores.php");
         <tr>
           <td class="col-num"><?php echo $i++; ?></td>
           <td class="col-unidad"><strong><?php echo htmlspecialchars($d['numero']); ?></strong></td>
-          <td class="col-deuda">$<?php echo number_format((float)$d['deuda'], 2); ?></td>
+          <td class="col-unidad"><?php echo (float)$d['saldo_favor'] > 0 ? '$' . number_format((float)$d['saldo_favor'], 2) : '—'; ?></td>
+          <td class="col-deuda">$<?php echo number_format((float)$d['deuda'] - (float)$d['saldo_favor'], 2); ?></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
       <tfoot id="total-footer">
         <tr class="total-row">
-          <td colspan="2"><strong>TOTAL DEUDORES: <?php echo count($deudores); ?> UNIDADES</strong></td>
+          <td colspan="3"><strong>TOTAL DEUDORES: <?php echo count($deudores); ?> UNIDADES</strong></td>
           <td class="col-deuda col-monto"><strong>$<?php echo number_format($total_deuda, 2); ?></strong></td>
         </tr>
       </tfoot>
@@ -122,6 +128,9 @@ include("../Controlador/reporte_deudores.php");
         <?php if ($total_vencido > 0): ?>
           · Vencido: <strong style="color:var(--rojo);">$<?php echo number_format($total_vencido, 2); ?></strong>
         <?php endif; ?>
+        <?php if ($total_saldo_favor > 0): ?>
+          · Saldo a favor: <strong style="color:var(--verde);">-$<?php echo number_format($total_saldo_favor, 2); ?></strong>
+        <?php endif; ?>
       </div>
 
       <?php if (!empty($deudores)): foreach ($deudores as $d): ?>
@@ -136,7 +145,10 @@ include("../Controlador/reporte_deudores.php");
           <?php if ((float)$d['deuda_vencida'] > 0): ?>
             <span style="color:var(--rojo);">Vencido: <strong>$<?php echo number_format((float)$d['deuda_vencida'], 2); ?></strong></span>
           <?php endif; ?>
-          <span style="color:var(--rojo);font-weight:700;">Total: $<?php echo number_format((float)$d['deuda'], 2); ?></span>
+          <?php if ((float)$d['saldo_favor'] > 0): ?>
+            <span style="color:var(--verde);">Saldo a favor: <strong>-$<?php echo number_format((float)$d['saldo_favor'], 2); ?></strong></span>
+          <?php endif; ?>
+          <span style="color:var(--rojo);font-weight:700;">Total: $<?php echo number_format((float)$d['deuda'] - (float)$d['saldo_favor'], 2); ?></span>
         </div>
       </div>
       <?php endforeach; else: ?>

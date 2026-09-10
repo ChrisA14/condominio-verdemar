@@ -2,6 +2,7 @@
 include("../Modelo/conexiondb.php");
 include("../Modelo/config.php");
 include("../Modelo/auth.php");
+include("../Modelo/pagos.php");
 requireLogin();
 
 $cuota_id = (int)($_GET['cuota_id'] ?? 0);
@@ -75,6 +76,8 @@ if ($unidad_id > 0) {
             $aviso['total_pagado'] += (float)$cu['monto_pagado'];
             $aviso['total_saldo'] += (float)$cu['saldo'];
         }
+        $aviso['saldo_favor'] = obtenerSaldoAFavor($connect, $aviso['id']);
+        $aviso['saldo_neto'] = round((float)$aviso['total_saldo'] - $aviso['saldo_favor'], 2);
 
         // Meses adeudados
         $aviso['meses'] = 0;
@@ -92,10 +95,12 @@ if ($unidad_id > 0) {
 
         // Pagos registrados de esta unidad (últimos 20)
         $stmt = $connect->prepare(
-            "SELECT p.id, p.monto, p.metodo_pago, p.referencia, p.fecha_pago, p.registrado_por, p.nota
+            "SELECT p.id, p.monto, p.metodo_pago, p.referencia, p.fecha_pago, p.registrado_por, p.nota, p.tipo,
+                    COALESCE(co.nombre, 'Anticipo / Saldo a favor') AS concepto
              FROM pagos p
-             JOIN cuotas_emitidas c ON p.cuota_id = c.id
-             WHERE c.unidad_id = ?
+             LEFT JOIN cuotas_emitidas c ON p.cuota_id = c.id
+             LEFT JOIN conceptos_cobro co ON c.concepto_id = co.id
+             WHERE p.unidad_id = ?
              ORDER BY p.fecha_pago DESC, p.id DESC
              LIMIT 20"
         );

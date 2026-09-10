@@ -2,6 +2,7 @@
 include("../Modelo/conexiondb.php");
 include("../Modelo/config.php");
 include("../Modelo/auth.php");
+include("../Modelo/pagos.php");
 requireLogin();
 
 $es_gestor = tieneAccesoTotal();
@@ -35,7 +36,9 @@ if ($es_gestor && isset($_POST['generar-btn'])) {
         $stmt_unidades->close();
 
         $insertados = 0;
+        $saldo_consumido = 0.0;
         if ($conceptos && $unidades) {
+            $connect->begin_transaction();
             $insert = $connect->prepare(
                 "INSERT IGNORE INTO cuotas_emitidas
                    (unidad_id, concepto_id, periodo_mes, periodo_anio, monto, monto_pagado, fecha_emision, fecha_vencimiento, estado)
@@ -48,13 +51,22 @@ if ($es_gestor && isset($_POST['generar-btn'])) {
                         $insertados++;
                     }
                 }
+                // Consumir el saldo a favor de cada unidad contra sus cuotas abiertas
+                if (obtenerSaldoAFavor($connect, $un['id']) > 0.001) {
+                    $res = aplicarSaldoAFavor($connect, $un['id']);
+                    $saldo_consumido += $res['abonado'];
+                }
             }
             $insert->close();
+            $connect->commit();
         }
 
         $_SESSION['tipo_mensaje'] = $insertados > 0 ? 'success' : 'info';
+        $msg_saldo = $saldo_consumido > 0
+            ? " · saldo a favor absorbido: $" . number_format($saldo_consumido, 2)
+            : "";
         $_SESSION['mensaje'] = $insertados > 0
-            ? "✅ Se emitieron $insertados aviso(s) de cobro para $mes/$anio"
+            ? "✅ Se emitieron $insertados aviso(s) de cobro para $mes/$anio.$msg_saldo"
             : "ℹ️ No se generaron avisos nuevos: ya estaban emitidos para $mes/$anio o no hay conceptos/unidades activos";
 
     } catch (Exception $e) {
@@ -184,9 +196,10 @@ $count_sql = "SELECT COUNT(*) AS total
                   SELECT u.id
                   FROM unidades u
                   JOIN cuotas_emitidas c ON c.unidad_id = u.id
+                  LEFT JOIN saldos s ON s.unidad_id = u.id
                   $where_sql
-                  GROUP BY u.id
-                  HAVING COALESCE(SUM(c.monto - c.monto_pagado), 0) > 0.001
+                  GROUP BY u.id, s.saldo
+                  HAVING COALESCE(SUM(c.monto - c.monto_pagado), 0) - COALESCE(s.saldo, 0) > 0.001
               ) AS deudores";
 
 $stmt = $connect->prepare($count_sql);
@@ -202,6 +215,8 @@ $sql = "SELECT u.id, u.torre, u.numero, u.piso, u.tipo,
         COALESCE(SUM(c.monto), 0) AS monto,
         COALESCE(SUM(c.monto_pagado), 0) AS pagado,
         COALESCE(SUM(c.monto - c.monto_pagado), 0) AS saldo,
+        COALESCE(s.saldo, 0) AS saldo_favor,
+        COALESCE(SUM(c.monto - c.monto_pagado), 0) - COALESCE(s.saldo, 0) AS saldo_neto,
         COALESCE(SUM(CASE WHEN c.estado = 'vencida' THEN c.monto - c.monto_pagado ELSE 0 END), 0) AS vencido,
         MIN(c.periodo_anio * 12 + c.periodo_mes) AS mes_min,
         MAX(c.periodo_anio * 12 + c.periodo_mes) AS mes_max,
@@ -215,10 +230,11 @@ $sql = "SELECT u.id, u.torre, u.numero, u.piso, u.tipo,
           LIMIT 1) AS responsable
         FROM unidades u
         JOIN cuotas_emitidas c ON c.unidad_id = u.id
+        LEFT JOIN saldos s ON s.unidad_id = u.id
         $where_sql
-        GROUP BY u.id, u.torre, u.numero, u.piso, u.tipo
-        HAVING COALESCE(SUM(c.monto - c.monto_pagado), 0) > 0.001
-        ORDER BY vencido DESC, saldo DESC, u.torre, u.numero
+        GROUP BY u.id, u.torre, u.numero, u.piso, u.tipo, s.saldo
+        HAVING COALESCE(SUM(c.monto - c.monto_pagado), 0) - COALESCE(s.saldo, 0) > 0.001
+        ORDER BY vencido DESC, saldo_neto DESC, u.torre, u.numero
         LIMIT ?, ?";
 
 $params_list = $params;
