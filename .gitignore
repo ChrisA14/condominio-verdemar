@@ -2,9 +2,6 @@
 *.zip
 backup_clinico.sql
 
-# Base de datos (se exporta manualmente cuando se necesite)
-condominio.sql
-
 # Comprobantes subidos (imágenes de usuarios)
 uploads/comprobantes/*
 
