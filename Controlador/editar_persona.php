@@ -170,9 +170,9 @@ if (!empty($cedula)) {
 
     if ($persona) {
         $stmt = $connect->prepare(
-            "SELECT t.id, t.rol, t.fecha_inicio, u.id AS unidad_id, u.torre, u.piso, u.numero
+            "SELECT t.id, t.rol, t.fecha_inicio, u.id AS unidad_id, u.torre, u.numero
              FROM tenencia t JOIN unidades u ON t.unidad_id = u.id
-             WHERE t.persona_cedula = ? ORDER BY CAST(u.piso AS UNSIGNED), u.numero"
+             WHERE t.persona_cedula = ? ORDER BY CAST(SUBSTRING_INDEX(u.numero, '-', 1) AS UNSIGNED), u.numero"
         );
         $stmt->bind_param("s", $cedula);
         $stmt->execute();
@@ -190,8 +190,9 @@ if (!empty($cedula)) {
 }
 
 $unidades = [];
-$stmt = $connect->prepare("SELECT u.id, u.torre, u.piso, u.numero, u.tipo, u.numero AS codigo
-                            FROM unidades u WHERE u.estado = 'activa' ORDER BY CAST(u.piso AS UNSIGNED), u.numero");
+$stmt = $connect->prepare("SELECT u.id, u.torre, u.numero, u.tipo, u.numero AS codigo
+                            FROM unidades u WHERE u.estado = 'activa'
+                            ORDER BY CAST(SUBSTRING_INDEX(u.numero, '-', 1) AS UNSIGNED), u.numero");
 $stmt->execute();
 $unidades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();

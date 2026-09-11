@@ -193,8 +193,12 @@ include("../Controlador/registro_persona.php");
   const unidadesDisponibles = <?php echo json_encode($unidades, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
   function pisosUnicos() {
-      return Array.from(new Set(unidadesDisponibles.map(u => String(u.piso))))
+      return Array.from(new Set(unidadesDisponibles.map(u => pisoDeNumero(u.numero))))
           .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  }
+
+  function pisoDeNumero(numero) {
+      return String(numero).split('-')[0];
   }
 
   function letraDeNumero(numero) {
@@ -203,7 +207,7 @@ include("../Controlador/registro_persona.php");
   }
 
   function unidadesPorPiso(piso) {
-      return unidadesDisponibles.filter(u => String(u.piso) === String(piso));
+      return unidadesDisponibles.filter(u => pisoDeNumero(u.numero) === String(piso));
   }
 
   function letrasDisponibles(piso) {
@@ -306,7 +310,7 @@ include("../Controlador/registro_persona.php");
       function actualizarUnidad() {
           const p = selPiso.value;
           const l = selApto.value;
-          const unit = unidadesDisponibles.find(u => String(u.piso) === p && String(u.numero) === p + '-' + l);
+          const unit = unidadesDisponibles.find(u => pisoDeNumero(u.numero) === p && String(u.numero) === p + '-' + l);
           if (unit) {
               hidden.value = unit.id;
               txt.textContent = 'Unidad: ' + p + '-' + l + (unit.tipo ? ' (' + unit.tipo + ')' : '');
@@ -329,7 +333,7 @@ include("../Controlador/registro_persona.php");
       if (unidadId) {
           const unit = unidadesDisponibles.find(u => String(u.id) === String(unidadId));
           if (unit) {
-              selPiso.value = String(unit.piso);
+              selPiso.value = pisoDeNumero(unit.numero);
               actualizarAptos();
               selApto.value = letraDeNumero(unit.numero);
           }

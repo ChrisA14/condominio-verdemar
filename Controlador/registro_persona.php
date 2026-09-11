@@ -5,8 +5,9 @@ include("../Modelo/auth.php");
 requireRol(['admin', 'junta']);
 
 $unidades = [];
-$stmt = $connect->prepare("SELECT u.id, u.torre, u.piso, u.numero, u.tipo, u.numero AS codigo
-                            FROM unidades u WHERE u.estado = 'activa' ORDER BY CAST(u.piso AS UNSIGNED), u.numero");
+$stmt = $connect->prepare("SELECT u.id, u.torre, u.numero, u.tipo, u.numero AS codigo
+                            FROM unidades u WHERE u.estado = 'activa'
+                            ORDER BY CAST(SUBSTRING_INDEX(u.numero, '-', 1) AS UNSIGNED), u.numero");
 $stmt->execute();
 $result = $stmt->get_result();
 $unidades = $result->fetch_all(MYSQLI_ASSOC);
