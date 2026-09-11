@@ -17,9 +17,9 @@ $params = [];
 $types = '';
 
 if (!empty($busqueda)) {
-    $where_conditions[] = "(u.torre LIKE ? OR u.numero LIKE ? OR u.piso LIKE ?)";
-    $params = array_fill(0, 3, "%$busqueda%");
-    $types = 'sss';
+    $where_conditions[] = "(u.torre LIKE ? OR u.numero LIKE ?)";
+    $params = array_fill(0, 2, "%$busqueda%");
+    $types = 'ss';
 }
 
 if ($filtro_estado === 'activa' || $filtro_estado === 'inactiva') {
@@ -43,7 +43,7 @@ $total_unidades = $stmt_count->get_result()->fetch_assoc()['total'];
 $stmt_count->close();
 $total_paginas = ceil($total_unidades / $por_pagina);
 
-$sql = "SELECT u.id, u.torre, u.numero, u.piso, u.tipo, u.estado,
+$sql = "SELECT u.id, u.torre, u.numero, u.tipo, u.estado,
         (SELECT GROUP_CONCAT(CONCAT(p.nombre, '|', t.rol) SEPARATOR ';')
            FROM tenencia t JOIN personas p ON p.cedula = t.persona_cedula
            WHERE t.unidad_id = u.id AND t.estado = 'activo') AS ocupantes,

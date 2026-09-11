@@ -33,7 +33,7 @@ $where_sql = " WHERE " . implode(' AND ', $where) . $unidades_filtro[0];
 $params = array_merge($params, $unidades_filtro[1]);
 $types .= str_repeat('i', count($unidades_filtro[1]));
 
-$sql = "SELECT u.id, u.torre, u.numero, u.piso,
+$sql = "SELECT u.id, u.torre, u.numero,
         (SELECT GROUP_CONCAT(DISTINCT CONCAT(p.nombre, '|', t.rol) SEPARATOR ';')
            FROM tenencia t JOIN personas p ON p.cedula = t.persona_cedula
            WHERE t.unidad_id = u.id AND t.estado = 'activo') AS ocupantes,
@@ -45,7 +45,7 @@ $sql = "SELECT u.id, u.torre, u.numero, u.piso,
         LEFT JOIN cuotas_emitidas c ON c.unidad_id = u.id
         LEFT JOIN saldos s ON s.unidad_id = u.id
         $where_sql
-        GROUP BY u.id, u.torre, u.numero, u.piso, s.saldo
+        GROUP BY u.id, u.torre, u.numero, s.saldo
         HAVING COALESCE(SUM(CASE WHEN c.estado IN ('pendiente','vencida','parcial') THEN c.monto - c.monto_pagado ELSE 0 END), 0) - COALESCE(s.saldo, 0) > 0
         ORDER BY deuda DESC";
 

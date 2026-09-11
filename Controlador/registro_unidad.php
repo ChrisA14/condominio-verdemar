@@ -8,7 +8,6 @@ if (isset($_POST['guardar-btn'])) {
 
     $torre = trim($_POST['torre'] ?? '');
     $numero = trim($_POST['numero'] ?? '');
-    $piso = trim($_POST['piso'] ?? '');
     $tipo = trim($_POST['tipo'] ?? 'apartamento');
     $estado = trim($_POST['estado'] ?? 'activa');
 
@@ -39,9 +38,9 @@ if (isset($_POST['guardar-btn'])) {
         $stmt_verificar->close();
 
         $stmt = $connect->prepare(
-            "INSERT INTO unidades (torre, numero, piso, tipo, estado) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO unidades (torre, numero, tipo, estado) VALUES (?, ?, ?, ?)"
         );
-        $stmt->bind_param("sssss", $torre, $numero, $piso, $tipo, $estado);
+        $stmt->bind_param("ssss", $torre, $numero, $tipo, $estado);
         if ($stmt->execute()) {
             $_SESSION['tipo_mensaje'] = 'success';
             $_SESSION['mensaje'] = "✅ Unidad '$numero' registrada exitosamente";

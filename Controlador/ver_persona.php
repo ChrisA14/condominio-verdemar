@@ -21,7 +21,7 @@ if (!empty($cedula)) {
 
     if ($persona) {
         $stmt = $connect->prepare(
-            "SELECT t.id, t.rol, t.fecha_inicio, t.estado, u.id AS unidad_id, u.torre, u.numero, u.piso, u.tipo
+            "SELECT t.id, t.rol, t.fecha_inicio, t.estado, u.id AS unidad_id, u.torre, u.numero, u.tipo
              FROM tenencia t JOIN unidades u ON t.unidad_id = u.id
              WHERE t.persona_cedula = ? ORDER BY u.torre, u.numero"
         );

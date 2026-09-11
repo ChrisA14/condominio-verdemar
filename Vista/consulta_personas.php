@@ -64,8 +64,8 @@ include("../Controlador/consulta_personas.php");
                 <td data-label="Cédula"><?php echo htmlspecialchars($per['cedula']); ?></td>
                 <td data-label="Nombre"><strong><?php echo htmlspecialchars($per['nombre']); ?></strong></td>
                 <td data-label="Contacto">
-                  <div><?php echo htmlspecialchars($per['telefono']); ?></div>
-                  <small style="color:var(--gris-500);"><?php echo htmlspecialchars($per['correo']); ?></small>
+                  <div><?php echo htmlspecialchars($per['telefono'] ?? '—'); ?></div>
+                  <small style="color:var(--gris-500);"><?php echo htmlspecialchars($per['correo'] ?? '—'); ?></small>
                 </td>
                 <td data-label="Unidades"><?php echo htmlspecialchars($per['unidades'] ?? '—'); ?></td>
                 <td data-label="Categoría">

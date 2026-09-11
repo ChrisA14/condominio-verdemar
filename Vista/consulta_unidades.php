@@ -22,7 +22,7 @@ include("../Controlador/consulta_unidades.php");
 
     <div class="form-container form-container--wide">
       <form action="consulta_unidades.php" method="get" class="search-form">
-        <input type="text" name="buscar" placeholder="Buscar por torre, número o piso..."
+        <input type="text" name="buscar" placeholder="Buscar por torre o número..."
                value="<?php echo htmlspecialchars(isset($_GET['buscar']) ? $_GET['buscar'] : ''); ?>">
         <select name="estado" style="width:auto;min-width:150px;">
           <option value="">Todos</option>
@@ -38,15 +38,14 @@ include("../Controlador/consulta_unidades.php");
       <div class="table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Unidad</th><th>Piso</th><th>Tipo</th><th>Ocupantes</th><th>Deuda</th><th>Estado</th></tr>
+            <tr><th>Unidad</th><th>Tipo</th><th>Ocupantes</th><th>Deuda</th><th>Estado</th></tr>
           </thead>
           <tbody>
             <?php if (empty($unidades)): ?>
-              <tr><td colspan="6" style="text-align:center;padding:30px;">No hay unidades registradas</td></tr>
+              <tr><td colspan="5" style="text-align:center;padding:30px;">No hay unidades registradas</td></tr>
             <?php else: foreach ($unidades as $un): ?>
               <tr>
                 <td data-label="Unidad"><strong><?php echo htmlspecialchars($un['numero']); ?></strong></td>
-                <td data-label="Piso"><?php echo htmlspecialchars($un['piso'] ?? '—'); ?></td>
                 <td data-label="Tipo"><?php echo TIPOS_UNIDAD[$un['tipo']] ?? $un['tipo']; ?></td>
                 <td data-label="Ocupantes">
                   <?php

@@ -211,7 +211,7 @@ $total_unidades = $stmt->get_result()->fetch_assoc()['total'];
 $stmt->close();
 $total_paginas = ceil($total_unidades / $por_pagina);
 
-$sql = "SELECT u.id, u.torre, u.numero, u.piso, u.tipo,
+$sql = "SELECT u.id, u.torre, u.numero, u.tipo,
         COALESCE(SUM(c.monto), 0) AS monto,
         COALESCE(SUM(c.monto_pagado), 0) AS pagado,
         COALESCE(SUM(c.monto - c.monto_pagado), 0) AS saldo,
@@ -232,7 +232,7 @@ $sql = "SELECT u.id, u.torre, u.numero, u.piso, u.tipo,
         JOIN cuotas_emitidas c ON c.unidad_id = u.id
         LEFT JOIN saldos s ON s.unidad_id = u.id
         $where_sql
-        GROUP BY u.id, u.torre, u.numero, u.piso, u.tipo, s.saldo
+        GROUP BY u.id, u.torre, u.numero, u.tipo, s.saldo
         HAVING COALESCE(SUM(c.monto - c.monto_pagado), 0) - COALESCE(s.saldo, 0) > 0.001
         ORDER BY vencido DESC, saldo_neto DESC, u.torre, u.numero
         LIMIT ?, ?";

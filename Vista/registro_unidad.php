@@ -37,13 +37,8 @@ include("../Controlador/registro_unidad.php");
             <div class="form-group">
               <label for="numero">Número: <span class="requerido">*</span></label>
               <input type="text" id="numero" name="numero" required maxlength="10"
-                     placeholder="Ej: 101, PH-1, E-01"
+                     placeholder="Ej: 1-A, PH-1, Local 12"
                      value="<?php echo isset($_POST['numero']) ? htmlspecialchars($_POST['numero']) : ''; ?>">
-            </div>
-            <div class="form-group">
-              <label for="piso">Piso:</label>
-              <input type="text" id="piso" name="piso" maxlength="10"
-                     value="<?php echo isset($_POST['piso']) ? htmlspecialchars($_POST['piso']) : ''; ?>">
             </div>
           </div>
           <div class="form-row">

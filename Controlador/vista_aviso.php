@@ -22,7 +22,7 @@ if ($cuota_id > 0 && $unidad_id <= 0) {
 if ($unidad_id > 0) {
     $aviso = [];
     // Datos de la unidad
-    $stmt = $connect->prepare("SELECT id, torre, numero, piso, tipo FROM unidades WHERE id = ?");
+    $stmt = $connect->prepare("SELECT id, torre, numero, tipo FROM unidades WHERE id = ?");
     $stmt->bind_param("i", $unidad_id);
     $stmt->execute();
     $aviso = $stmt->get_result()->fetch_assoc();
