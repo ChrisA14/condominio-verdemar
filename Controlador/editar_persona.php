@@ -11,11 +11,45 @@ $junta = null;
 
 if (isset($_POST['actualizar-btn'])) {
     $cedula = trim($_POST['cedula'] ?? '');
-    $nombre = trim($_POST['nombre'] ?? '');
+    $tipo_ciudadano = substr($cedula, 0, 1);
+    $es_jg = in_array($tipo_ciudadano, TIPOS_NOMBRE_CON_NUMEROS);
+
+    $nombre_raw = trim($_POST['nombre'] ?? '');
+    if ($es_jg) {
+        $nombre_patron = '/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s\',\.]/u';
+        $etiqueta_nombre = 'razón social';
+    } else {
+        $nombre_patron = '/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s\',\.]/u';
+        $etiqueta_nombre = 'nombre';
+    }
+    $nombre = mb_substr(preg_replace($nombre_patron, '', $nombre_raw), 0, 100);
     $correo = trim($_POST['correo'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
+    $telefono_solo_numeros = preg_replace('/\D/', '', $_POST['telefono'] ?? '');
+    $telefono = mb_substr($telefono_solo_numeros, 0, 15);
     $direccion = trim($_POST['direccion'] ?? '');
     $fecha_nacimiento = $_POST['fecha_nacimiento'] ?? null;
+
+    if ($es_jg) {
+        $fecha_nacimiento = null;
+        $rep_legal_nombre_raw = trim($_POST['rep_legal_nombre'] ?? '');
+        $rep_legal_nombre_solo = preg_replace('/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s\'.]/u', '', $rep_legal_nombre_raw);
+        $rep_legal_nombre = mb_substr($rep_legal_nombre_solo, 0, 100);
+        $rep_legal_tipo = strtoupper(trim($_POST['rep_legal_tipo_cedula'] ?? ''));
+        $rep_legal_numero = preg_replace('/\s+/', '', $_POST['rep_legal_numero_cedula'] ?? '');
+        $rep_legal_numero = preg_replace('/[^0-9]/', '', $rep_legal_numero);
+        $rep_legal_numero = mb_substr($rep_legal_numero, 0, 18);
+        $rep_legal_cedula = ($rep_legal_tipo && $rep_legal_numero !== '') ? $rep_legal_tipo . '-' . $rep_legal_numero : null;
+        $rep_legal_correo = trim($_POST['rep_legal_correo'] ?? '');
+        $rep_legal_telefono_solo = preg_replace('/\D/', '', $_POST['rep_legal_telefono'] ?? '');
+        $rep_legal_telefono = mb_substr($rep_legal_telefono_solo, 0, 15);
+        $rep_legal_fecha_nac = $_POST['rep_legal_fecha_nac'] ?? null;
+    } else {
+        $rep_legal_nombre = null;
+        $rep_legal_cedula = null;
+        $rep_legal_correo = null;
+        $rep_legal_telefono = null;
+        $rep_legal_fecha_nac = null;
+    }
 
     $unidad_ids = $_POST['unidad_id'] ?? [];
     $roles = $_POST['rol_unidad'] ?? [];
@@ -28,10 +62,37 @@ if (isset($_POST['actualizar-btn'])) {
 
     $errores = [];
     if (empty($cedula)) $errores[] = "La cédula es obligatoria";
-    if (empty($nombre)) $errores[] = "El nombre es obligatorio";
+    if (empty($nombre)) $errores[] = "El $etiqueta_nombre es obligatorio";
+    if ($nombre_raw !== $nombre) $errores[] = "El $etiqueta_nombre solo puede contener " . ($es_jg ? "letras, numeros y espacios" : "letras y espacios");
     if (!empty($correo) && !filter_var($correo, FILTER_VALIDATE_EMAIL)) $errores[] = "El formato del correo no es válido";
+    if (!empty($telefono) && !preg_match('/^[0-9]{7,15}$/', $telefono)) $errores[] = "El teléfono debe contener solo 7 a 15 digitos";
     if ($es_junta && empty($cargo)) $errores[] = "Debe seleccionar el cargo de la junta";
     if ($periodo_inicio && $periodo_fin && $periodo_fin < $periodo_inicio) $errores[] = "El fin del periodo no puede ser anterior al inicio";
+
+    if (!empty($fecha_nacimiento)) {
+        $fn = explode('-', $fecha_nacimiento);
+        if (count($fn) !== 3 || !checkdate((int)$fn[1], (int)$fn[2], (int)$fn[0])) {
+            $errores[] = "La fecha de nacimiento no es válida";
+        } elseif ($fecha_nacimiento > date('Y-m-d')) {
+            $errores[] = "La fecha de nacimiento no puede ser en el futuro";
+        }
+    }
+
+    if ($es_jg) {
+        if ($rep_legal_nombre_raw !== $rep_legal_nombre) $errores[] = "El nombre del representante legal solo puede contener letras y espacios";
+        if (!empty($rep_legal_numero) && !array_key_exists($rep_legal_tipo, TIPOS_CEDULA_REP_LEGAL)) $errores[] = "Debe seleccionar el tipo de cédula del representante legal";
+        if (!empty($rep_legal_numero) && !preg_match('/^[0-9]{5,18}$/', $rep_legal_numero)) $errores[] = "El numero de cédula del representante legal debe contener solo digitos";
+        if (!empty($rep_legal_correo) && !filter_var($rep_legal_correo, FILTER_VALIDATE_EMAIL)) $errores[] = "El formato del correo del representante legal no es válido";
+        if (!empty($rep_legal_telefono) && !preg_match('/^[0-9]{7,15}$/', $rep_legal_telefono)) $errores[] = "El teléfono del representante legal debe contener solo 7 a 15 digitos";
+        if (!empty($rep_legal_fecha_nac)) {
+            $rfn = explode('-', $rep_legal_fecha_nac);
+            if (count($rfn) !== 3 || !checkdate((int)$rfn[1], (int)$rfn[2], (int)$rfn[0])) {
+                $errores[] = "La fecha de nacimiento del representante legal no es válida";
+            } elseif ($rep_legal_fecha_nac > date('Y-m-d')) {
+                $errores[] = "La fecha de nacimiento del representante legal no puede ser en el futuro";
+            }
+        }
+    }
 
     if (!empty($errores)) {
         $_SESSION['tipo_mensaje'] = 'error';
@@ -44,9 +105,9 @@ if (isset($_POST['actualizar-btn'])) {
         $connect->begin_transaction();
 
         $upd = $connect->prepare(
-            "UPDATE personas SET nombre = ?, correo = ?, telefono = ?, direccion = ?, fecha_nacimiento = ? WHERE cedula = ?"
+            "UPDATE personas SET nombre = ?, correo = ?, telefono = ?, direccion = ?, fecha_nacimiento = ?, rep_legal_nombre = ?, rep_legal_cedula = ?, rep_legal_correo = ?, rep_legal_telefono = ?, rep_legal_fecha_nac = ? WHERE cedula = ?"
         );
-        $upd->bind_param("ssssss", $nombre, $correo, $telefono, $direccion, $fecha_nacimiento, $cedula);
+        $upd->bind_param("sssssssssss", $nombre, $correo, $telefono, $direccion, $fecha_nacimiento, $rep_legal_nombre, $rep_legal_cedula, $rep_legal_correo, $rep_legal_telefono, $rep_legal_fecha_nac, $cedula);
         if (!$upd->execute()) throw new Exception("Error al actualizar la persona: " . $upd->error);
         $upd->close();
 
@@ -109,9 +170,9 @@ if (!empty($cedula)) {
 
     if ($persona) {
         $stmt = $connect->prepare(
-            "SELECT t.id, t.rol, t.fecha_inicio, u.id AS unidad_id, u.torre, u.numero
+            "SELECT t.id, t.rol, t.fecha_inicio, u.id AS unidad_id, u.torre, u.piso, u.numero
              FROM tenencia t JOIN unidades u ON t.unidad_id = u.id
-             WHERE t.persona_cedula = ? ORDER BY u.torre, u.numero"
+             WHERE t.persona_cedula = ? ORDER BY CAST(u.piso AS UNSIGNED), u.numero"
         );
         $stmt->bind_param("s", $cedula);
         $stmt->execute();
@@ -129,8 +190,8 @@ if (!empty($cedula)) {
 }
 
 $unidades = [];
-$stmt = $connect->prepare("SELECT u.id, u.torre, u.numero, u.tipo, u.numero AS codigo
-                            FROM unidades u WHERE u.estado = 'activa' ORDER BY u.numero");
+$stmt = $connect->prepare("SELECT u.id, u.torre, u.piso, u.numero, u.tipo, u.numero AS codigo
+                            FROM unidades u WHERE u.estado = 'activa' ORDER BY CAST(u.piso AS UNSIGNED), u.numero");
 $stmt->execute();
 $unidades = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();

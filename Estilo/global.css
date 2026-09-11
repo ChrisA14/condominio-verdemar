@@ -328,6 +328,9 @@ select {
 
 .field-note { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--gris-500); }
 
+.aviso-cedula { display: block; margin-top: 4px; font-size: 0.78rem; font-weight: 600; }
+.aviso-cedula.error { color: var(--rojo); }
+
 input[type="number"] { -moz-appearance: textfield; }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }

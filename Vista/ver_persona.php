@@ -18,17 +18,20 @@ include("../Controlador/ver_persona.php");
     <?php if (!$persona): ?>
       <div class="mensaje error" style="margin-top:18px;">❌ Persona no encontrada</div>
     <?php else: ?>
+    <?php $es_jg = in_array(substr($persona['cedula'], 0, 1), TIPOS_NOMBRE_CON_NUMEROS); ?>
 
     <div class="header">
-      <h2><i class="bi bi-person"></i> <?php echo htmlspecialchars($persona['nombre']); ?></h2>
+      <div class="header-title-card">
+        <h2><i class="bi bi-person"></i> <?php echo htmlspecialchars($persona['nombre']); ?></h2>
+      </div>
     </div>
 
     <div class="detail-box">
       <div class="section">
         <h3><i class="bi bi-clipboard-data"></i> Información Personal</h3>
         <div class="detail-grid">
-          <div class="detail-item"><label>Cédula:</label><span><?php echo htmlspecialchars($persona['cedula']); ?></span></div>
-          <div class="detail-item"><label>Nombre:</label><span><?php echo htmlspecialchars($persona['nombre']); ?></span></div>
+          <div class="detail-item"><label><?php echo $es_jg ? 'Rif:' : 'Cédula:'; ?></label><span><?php echo htmlspecialchars($persona['cedula']); ?></span></div>
+          <div class="detail-item"><label><?php echo $es_jg ? 'Razón Social' : 'Nombre'; ?>:</label><span><?php echo htmlspecialchars($persona['nombre']); ?></span></div>
           <div class="detail-item"><label>Teléfono:</label><span><?php echo htmlspecialchars($persona['telefono'] ?? '—'); ?></span></div>
           <div class="detail-item"><label>Correo:</label><span><?php echo htmlspecialchars($persona['correo'] ?? '—'); ?></span></div>
           <div class="detail-item"><label>Dirección:</label><span><?php echo htmlspecialchars($persona['direccion'] ?? '—'); ?></span></div>
@@ -37,11 +40,24 @@ include("../Controlador/ver_persona.php");
         </div>
       </div>
 
+      <?php if ($es_jg): ?>
+      <div class="section">
+        <h3><i class="bi bi-person-badge"></i> Representante Legal</h3>
+        <div class="detail-grid">
+          <div class="detail-item"><label>Nombre:</label><span><?php echo htmlspecialchars($persona['rep_legal_nombre'] ?? '—'); ?></span></div>
+          <div class="detail-item"><label>Cédula:</label><span><?php echo htmlspecialchars($persona['rep_legal_cedula'] ?? '—'); ?></span></div>
+          <div class="detail-item"><label>Teléfono:</label><span><?php echo htmlspecialchars($persona['rep_legal_telefono'] ?? '—'); ?></span></div>
+          <div class="detail-item"><label>Correo:</label><span><?php echo htmlspecialchars($persona['rep_legal_correo'] ?? '—'); ?></span></div>
+          <div class="detail-item"><label>Fecha de Nacimiento:</label><span><?php echo $persona['rep_legal_fecha_nac'] ? date('d/m/Y', strtotime($persona['rep_legal_fecha_nac'])) : '—'; ?></span></div>
+        </div>
+      </div>
+      <?php endif; ?>
+
       <div class="section">
         <h3><i class="bi bi-building"></i> Unidades</h3>
         <?php if (empty($tenencias)): ?>
           <p style="color:var(--gris-500);">Sin unidades asignadas.</p>
-        <?php else: ?>
+<?php else: ?>
           <div class="table-wrap">
             <table class="data-table">
               <thead><tr><th>Unidad</th><th>Tipo</th><th>Rol</th><th>Ingreso</th><th>Estado</th></tr></thead>

@@ -27,6 +27,23 @@ define('ROLES_TENENCIA', [
     'residente'   => 'Residente'
 ]);
 
+// Tipos de cédula de ciudadano (prefijo nacional/extranjero)
+define('TIPOS_CEDULA', [
+    'V' => 'Venezolano',
+    'E' => 'Extranjero',
+    'J' => 'Jurídico',
+    'G' => 'Gobierno'
+]);
+
+// Tipos de cédula cuyo nombre (razón social) puede contener números
+define('TIPOS_NOMBRE_CON_NUMEROS', ['J', 'G']);
+
+// Tipos de cédula permitidos para el representante legal de una persona J/G
+define('TIPOS_CEDULA_REP_LEGAL', [
+    'V' => 'Venezolano',
+    'E' => 'Extranjero'
+]);
+
 // Tipos de unidad
 define('TIPOS_UNIDAD', [
     'apartamento'     => 'Apartamento',

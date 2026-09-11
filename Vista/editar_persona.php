@@ -26,6 +26,7 @@ include("../Controlador/editar_persona.php");
     <?php if (!$persona): ?>
       <div class="mensaje error">❌ Persona no encontrada</div>
     <?php else: ?>
+    <?php $es_jg = in_array(substr($persona['cedula'], 0, 1), TIPOS_NOMBRE_CON_NUMEROS); ?>
 
     <div class="form-container">
       <form action="editar_persona.php?cedula=<?php echo urlencode($persona['cedula']); ?>" method="post" autocomplete="off">
@@ -35,18 +36,21 @@ include("../Controlador/editar_persona.php");
           <legend><i class="bi bi-clipboard-data"></i> Información Personal</legend>
           <div class="form-row">
             <div class="form-group">
-              <label>Cédula (no editable):</label>
+              <label><?php echo $es_jg ? 'Rif (no editable):' : 'Cédula (no editable):'; ?></label>
               <input type="text" class="readonly-field" value="<?php echo htmlspecialchars($persona['cedula']); ?>" readonly>
             </div>
+            <?php if (!$es_jg): ?>
             <div class="form-group">
               <label for="fecha_nacimiento">Fecha de Nacimiento:</label>
               <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" max="<?php echo date('Y-m-d'); ?>"
                      value="<?php echo htmlspecialchars($persona['fecha_nacimiento'] ?? ''); ?>">
             </div>
+            <?php endif; ?>
           </div>
           <div class="form-group">
-            <label for="nombre">Nombre completo: <span class="requerido">*</span></label>
+            <label for="nombre"><?php echo $es_jg ? 'Razón Social' : 'Nombre completo'; ?>: <span class="requerido">*</span></label>
             <input type="text" id="nombre" name="nombre" required maxlength="100"
+                   oninput="sanearNombreEditar(this)"
                    value="<?php echo htmlspecialchars($persona['nombre']); ?>">
           </div>
           <div class="form-row">
@@ -67,6 +71,59 @@ include("../Controlador/editar_persona.php");
                    value="<?php echo htmlspecialchars($persona['direccion'] ?? ''); ?>">
           </div>
         </fieldset>
+
+        <?php if ($es_jg): ?>
+        <fieldset class="form-section">
+          <legend><i class="bi bi-person-badge"></i> Representante Legal</legend>
+          <p class="field-note">Datos del representante legal de la persona jurídica o gubernamental. Opcional.</p>
+          <div class="form-group">
+            <label for="rep_legal_nombre">Nombre del representante:</label>
+            <input type="text" id="rep_legal_nombre" name="rep_legal_nombre" maxlength="100" autocomplete="off"
+                   oninput="this.value = this.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'.]/g, '')"
+                   value="<?php echo htmlspecialchars($persona['rep_legal_nombre'] ?? ''); ?>">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rep_legal_tipo_cedula">Tipo de Cédula:</label>
+              <select id="rep_legal_tipo_cedula" name="rep_legal_tipo_cedula">
+                <option value="">Seleccione</option>
+                <?php foreach (TIPOS_CEDULA_REP_LEGAL as $k => $v): ?>
+                  <option value="<?php echo htmlspecialchars($k, ENT_QUOTES, 'UTF-8'); ?>"
+                    <?php echo ($persona['rep_legal_cedula'] && strpos($persona['rep_legal_cedula'], $k . '-') === 0) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($k . ' - ' . $v, ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rep_legal_numero_cedula">Número de Cédula:</label>
+              <input type="text" id="rep_legal_numero_cedula" name="rep_legal_numero_cedula" maxlength="18"
+                     inputmode="numeric" pattern="[0-9]*"
+                     oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                     value="<?php echo $persona['rep_legal_cedula'] ? htmlspecialchars(substr($persona['rep_legal_cedula'], 2)) : ''; ?>">
+            </div>
+            <div class="form-group">
+              <label for="rep_legal_fecha_nac">Fecha de Nacimiento:</label>
+              <input type="date" id="rep_legal_fecha_nac" name="rep_legal_fecha_nac" max="<?php echo date('Y-m-d'); ?>"
+                     value="<?php echo htmlspecialchars($persona['rep_legal_fecha_nac'] ?? ''); ?>">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rep_legal_correo">Correo electrónico:</label>
+              <input type="email" id="rep_legal_correo" name="rep_legal_correo" maxlength="100"
+                     value="<?php echo htmlspecialchars($persona['rep_legal_correo'] ?? ''); ?>">
+            </div>
+            <div class="form-group">
+              <label for="rep_legal_telefono">Teléfono:</label>
+              <input type="tel" id="rep_legal_telefono" name="rep_legal_telefono" inputmode="numeric"
+                     maxlength="15" pattern="[0-9]{7,15}"
+                     oninput="this.value = this.value.replace(/\D/g, '')"
+                     value="<?php echo htmlspecialchars($persona['rep_legal_telefono'] ?? ''); ?>">
+            </div>
+          </div>
+        </fieldset>
+        <?php endif; ?>
 
         <fieldset class="form-section">
           <legend><i class="bi bi-building"></i> Unidades Asignadas</legend>
@@ -124,36 +181,81 @@ include("../Controlador/editar_persona.php");
   const unidadesDisponibles = <?php echo json_encode($unidades); ?>;
   const tenenciasActuales = <?php echo json_encode($tenencias); ?>;
 
+  function pisosUnicos() {
+      return Array.from(new Set(unidadesDisponibles.map(u => String(u.piso))))
+          .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  }
+
+  function letraDeNumero(numero) {
+      const idx = String(numero).lastIndexOf('-');
+      return idx >= 0 ? String(numero).slice(idx + 1) : String(numero);
+  }
+
+  function unidadesPorPiso(piso) {
+      return unidadesDisponibles.filter(u => String(u.piso) === String(piso));
+  }
+
+  function letrasDisponibles(piso) {
+      return Array.from(new Set(unidadesPorPiso(piso).map(u => letraDeNumero(u.numero)))).sort();
+  }
+
   function agregarFilaUnidad(unidadId = '', rol = 'propietario') {
       const cont = document.getElementById('unidades-container');
       const fila = document.createElement('div');
       fila.className = 'form-row unidad-fila';
       fila.style.alignItems = 'flex-end';
+      fila.style.flexWrap = 'wrap';
 
-      const selUnidad = document.createElement('div');
-      selUnidad.className = 'form-group';
-      selUnidad.style.flex = '1';
-      const label = document.createElement('label');
-      label.textContent = 'Unidad:';
-      const select = document.createElement('select');
-      select.name = 'unidad_id[]';
-      select.style.width = '100%';
+      const divPiso = document.createElement('div');
+      divPiso.className = 'form-group';
+      divPiso.style.minWidth = '130px';
+      const lblPiso = document.createElement('label');
+      lblPiso.textContent = 'Piso:';
+      const selPiso = document.createElement('select');
+      selPiso.style.width = '100%';
       const opt0 = document.createElement('option');
       opt0.value = '';
-      opt0.textContent = 'Seleccione unidad';
-      select.appendChild(opt0);
-      unidadesDisponibles.forEach(u => {
+      opt0.textContent = 'Seleccione';
+      selPiso.appendChild(opt0);
+      pisosUnicos().forEach(p => {
           const op = document.createElement('option');
-          op.value = u.id;
-          op.textContent = u.codigo;
-          if (String(u.id) === String(unidadId)) op.selected = true;
-          select.appendChild(op);
+          op.value = p;
+          op.textContent = p;
+          selPiso.appendChild(op);
       });
-      selUnidad.appendChild(label);
-      selUnidad.appendChild(select);
+      divPiso.appendChild(lblPiso);
+      divPiso.appendChild(selPiso);
+
+      const divApto = document.createElement('div');
+      divApto.className = 'form-group';
+      divApto.style.minWidth = '110px';
+      const lblApto = document.createElement('label');
+      lblApto.textContent = 'Apto:';
+      const selApto = document.createElement('select');
+      selApto.style.width = '100%';
+      const optA0 = document.createElement('option');
+      optA0.value = '';
+      optA0.textContent = '—';
+      selApto.appendChild(optA0);
+      divApto.appendChild(lblApto);
+      divApto.appendChild(selApto);
+
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = 'unidad_id[]';
+      hidden.value = '';
+
+      const divInfo = document.createElement('div');
+      divInfo.className = 'form-group';
+      divInfo.style.minWidth = '150px';
+      const txt = document.createElement('span');
+      txt.textContent = 'Unidad: —';
+      divInfo.appendChild(txt);
 
       const selRol = document.createElement('div');
       selRol.className = 'form-group';
+      selRol.style.flex = '1';
+      selRol.style.minWidth = '150px';
       const labelRol = document.createElement('label');
       labelRol.textContent = 'Rol:';
       const selectRol = document.createElement('select');
@@ -178,15 +280,63 @@ include("../Controlador/editar_persona.php");
       btn.onclick = () => fila.remove();
       btnRemove.appendChild(btn);
 
-      fila.appendChild(selUnidad);
+      function actualizarAptos() {
+          const p = selPiso.value;
+          while (selApto.options.length > 1) selApto.remove(1);
+          if (!p) return;
+          letrasDisponibles(p).forEach(l => {
+              const op = document.createElement('option');
+              op.value = l;
+              op.textContent = l;
+              selApto.appendChild(op);
+          });
+      }
+
+      function actualizarUnidad() {
+          const p = selPiso.value;
+          const l = selApto.value;
+          const unit = unidadesDisponibles.find(u => String(u.piso) === p && String(u.numero) === p + '-' + l);
+          if (unit) {
+              hidden.value = unit.id;
+              txt.textContent = 'Unidad: ' + p + '-' + l + (unit.tipo ? ' (' + unit.tipo + ')' : '');
+          } else {
+              hidden.value = '';
+              txt.textContent = 'Unidad: —';
+          }
+      }
+
+      selPiso.addEventListener('change', () => { actualizarAptos(); actualizarUnidad(); });
+      selApto.addEventListener('change', actualizarUnidad);
+
+      fila.appendChild(divPiso);
+      fila.appendChild(divApto);
+      fila.appendChild(hidden);
+      fila.appendChild(divInfo);
       fila.appendChild(selRol);
       fila.appendChild(btnRemove);
+
+      if (unidadId) {
+          const unit = unidadesDisponibles.find(u => String(u.id) === String(unidadId));
+          if (unit) {
+              selPiso.value = String(unit.piso);
+              actualizarAptos();
+              selApto.value = letraDeNumero(unit.numero);
+          }
+      }
+      actualizarUnidad();
+
       cont.appendChild(fila);
   }
 
   function toggleJunta() {
       document.getElementById('junta-fields').style.display =
           document.getElementById('es_junta').checked ? 'block' : 'none';
+  }
+
+  function sanearNombreEditar(el) {
+      const conNumeros = <?php echo json_encode(TIPOS_NOMBRE_CON_NUMEROS, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>.includes(el.closest('form').querySelector('input[name="cedula"]').value.charAt(0));
+      const patron = conNumeros ? /[^A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s',.]/g : /[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s',.]/g;
+      el.value = el.value.replace(patron, '');
   }
 
   document.addEventListener('DOMContentLoaded', function() {

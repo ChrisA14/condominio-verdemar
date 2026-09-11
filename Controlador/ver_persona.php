@@ -11,7 +11,7 @@ $junta = null;
 $resumen = null;
 
 if (!empty($cedula)) {
-    $stmt = $connect->prepare("SELECT cedula, nombre, correo, telefono, direccion, fecha_nacimiento, fecha_creacion
+    $stmt = $connect->prepare("SELECT cedula, nombre, correo, telefono, direccion, fecha_nacimiento, rep_legal_nombre, rep_legal_cedula, rep_legal_correo, rep_legal_telefono, rep_legal_fecha_nac, fecha_creacion
                                FROM personas WHERE cedula = ?");
     $stmt->bind_param("s", $cedula);
     $stmt->execute();
